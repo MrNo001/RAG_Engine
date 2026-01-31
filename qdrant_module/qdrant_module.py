@@ -1,6 +1,8 @@
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qm
 
+import time
+
 
 def wait_for_qdrant(client: QdrantClient, timeout_s: float = 30.0) -> None:
     deadline = time.time() + timeout_s

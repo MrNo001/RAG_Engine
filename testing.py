@@ -1,21 +1,40 @@
-from pathlib import Path
+from qdrant_client import QdrantClient
+from qdrant_module.qdrant_module import wait_for_qdrant
+from sentence_transformers import SentenceTransformer
 
-from data_prep.passages import Document, Passage, DatasetBuilder
 
 
-def getPassages(docsPath:Path, passagesPath:Path) -> list[Passage]:
+client: QdrantClient = QdrantClient(host = "localhost",port = 6333)
 
-    if(passagesPath.exists()):
-        return DatasetBuilder.load_passages_jsonl(passagesPath)
-    else:
-        docs:list[Document] = DatasetBuilder.load_documents_jsonl(docsPath)
-        passages:list[Passage] = DatasetBuilder.build_passages(docs,chunk_size = 200,chunk_overlap = 20,)
+model_name = "sentence-transformers/all-MiniLM-L6-v2"
+model = SentenceTransformer(model_name)
+
+
+sentences = ["This is an example sentence", "Each sentence is converted"]
 
 def main():
-    docs_path = Path("dataset/simple_wikipedia_sample.jsonl")
-    passages_path = Path("dataset/passages.jsonl")
+    wait_for_qdrant(client)
+    #It takes time to load the sentence transformer model here
+    #It is not the embeding that is costly
+    print("Environment ready")
+    embeddings = model.encode(sentences)
+    print(embeddings)
 
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     main()
