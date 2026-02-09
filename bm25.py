@@ -2,6 +2,8 @@ from __future__ import annotations
 import re
 from data_prep.passages import Passage
 import pickle 
+import math
+import numpy as np
 
 from pathlib import Path
 
@@ -10,7 +12,7 @@ _TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 def tokenize(text: str) -> list[str]:
     return _TOKEN_RE.findall((text or "").lower())
 
-class BM25_Index:
+class BM25:
     passages: list[Passage]
 
     #Index params
@@ -20,9 +22,36 @@ class BM25_Index:
     doc_freq: list[dict[str, int]] = {}
     idf: dict[str, float] = {}
 
-    docs_with_token :dict[str, int] = {}
+    token_df_map :dict[str, int] = {}
+    
+    k1: float = 1.5
+    b: float = 0.75
+    epsilon: float = 0.25
 
-    def build_index(self,passages: list[Passage]) -> BM25_Index:
+    def __init__(self, k1 = 1.5, b = 0.75, epsilon = 0.25) -> None:
+        self.k1 = k1
+        self.b = b
+        self.epsilon = epsilon
+        
+
+    def calc_idf(self, nd):
+    
+        idf_sum = 0
+        negative_idfs = []
+        for word, freq in nd.items():
+            idf = math.log((self.corpus_size - freq + 0.5) / (freq + 0.5))
+            self.idf[word] = idf
+            idf_sum += idf
+            if idf < 0:
+                negative_idfs.append(word)
+        self.average_idf = idf_sum / len(self.idf)
+
+        eps = self.epsilon * self.average_idf
+        for word in negative_idfs:
+            self.idf[word] = eps
+        return;
+
+    def build_index(self,passages: list[Passage]) -> BM25:
         corpus_tokens = [tokenize(p.text) for p in passages] #List of list of strings
         doc_len_sum = 0
 
@@ -38,58 +67,39 @@ class BM25_Index:
             self.doc_freq.append(current_freq)
 
             for token,freq in current_freq.items():
-                if token not in self.docs_with_token:
-                    self.docs_with_token[token] = 0
-                self.docs_with_token[token] +=1 ;
+                if token not in self.token_doc_:
+                    self.token_df_map[token] = 0
+                self.token_df_map[token] +=1 ;
 
             self.corpus_size += 1;
 
         self.avgdl = doc_len_sum / self.corpus_size
+        self.calc_idf(self.token_df_map)
+        return;
+        
+    def get_scores(self, query):
 
+        score = np.zeros(self.corpus_size)
+        doc_len = np.array(self.doc_len)
+        for q in query:
+            q_freq = np.array([(doc.get(q) or 0) for doc in self.doc_freqs])
+            score += (self.idf.get(q) or 0) * (q_freq * (self.k1 + 1) / (q_freq + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)))
+        return score
 
-def load_bm25(path: Path) -> BM25_Index:
+    
+
+def load_bm25(path: Path) -> BM25:
     with path.open("rb") as f:
         obj = pickle.load(f)
         return obj
 
-def save_bm25(index: BM25_Index, path: Path) -> None:
+def save_bm25(index: BM25, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("wb") as f:
         pickle.dump(index, f)
-
-class BM25:
-    k1: float = 1.5
-    b: float = 0.75
-    epsilon: float = 0.25
-    index: BM25_Index
-
-    def _calc_idf(self, nd):
-        """
-        Calculates frequencies of terms in documents and in corpus.
-        This algorithm sets a floor on the idf values to eps * average_idf
-        """
-        # collect idf sum to calculate an average idf for epsilon value
-        idf_sum = 0
-        # collect words with negative idf to set them a special epsilon value.
-        # idf can be negative if word is contained in more than half of documents
-        negative_idfs = []
-        for word, freq in nd.items():
-            idf = math.log(self.corpus_size - freq + 0.5) - math.log(freq + 0.5)
-            self.idf[word] = idf
-            idf_sum += idf
-            if idf < 0:
-                negative_idfs.append(word)
-        self.average_idf = idf_sum / len(self.idf)
-
-        eps = self.epsilon * self.average_idf
-        for word in negative_idfs:
-            self.idf[word] = eps
-
-
-
-def test_bm25():
     
 
 
 if __name__ == "__main__":
-    test_bm25()
+    test = load_bm25(Path("dataset/bm25_index.pkl"))
+    print("hello")

@@ -17,6 +17,10 @@ BM25_Index - We use this data_object to store data about token frequency in pass
              corpus_size - number of passages processed,doc_freq - dictionary of each token in doc and its frequency
              idf - inverse document frequency, dictionary of all tokens in all of documents with their idf numbers
 
-            Pickle dump works by going through object structure three and recursivly saving all fields
+Pickle dump works by going through object structure three and recursivly saving all fields
 
 Corpus - The entire searchable universe,corpus_tokens is all of the text in the data returned as tokens
+
+
+The score for the whole query is the sum:
+$$score(D, Q) = \sum_{q \in Q} \text{IDF}(q) \cdot \frac{f(q, D) \cdot (k_1 + 1)}{f(q, D) + k_1 \cdot (1 - b + b \cdot \frac{|D|}{\text{avgdl}})}$$

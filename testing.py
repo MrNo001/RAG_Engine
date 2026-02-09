@@ -6,6 +6,9 @@ from qdrant_client.http import models as qmodels
 import numpy as np
 import json
 
+from bm25 import BM25
+from bm25 import load_bm25
+
 client: QdrantClient = QdrantClient(host = "localhost",port = 6333)
 
 model_name = "sentence-transformers/all-MiniLM-L6-v2"
@@ -66,10 +69,14 @@ def main():
     for result in results.points:
         print(f"ID: {result.id}, Payload: {result.payload}, Score: {result.score}")
 
+
+    bm25 = BM25()
+    bm25.build_index(test_sentences)
     
+    
+    print("End")
 
-
- 
+    
 
 
 
