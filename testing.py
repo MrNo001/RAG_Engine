@@ -3,6 +3,8 @@ from qdrant_module.qdrant_module import wait_for_qdrant
 from sentence_transformers import SentenceTransformer
 from qdrant_client.http import models as qmodels
 
+from data_prep.passages import Passage
+
 import numpy as np
 import json
 
@@ -69,9 +71,10 @@ def main():
     for result in results.points:
         print(f"ID: {result.id}, Payload: {result.payload}, Score: {result.score}")
 
+    passages = Passage.load_passages_jsonl("dataset/passages.jsonl");
 
-    bm25 = BM25()
-    bm25.build_index(test_sentences)
+    bm25 = BM25(passages)
+    bm25.build_index()
     
     
     print("End")

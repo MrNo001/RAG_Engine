@@ -24,3 +24,21 @@ Corpus - The entire searchable universe,corpus_tokens is all of the text in the 
 
 The score for the whole query is the sum:
 $$score(D, Q) = \sum_{q \in Q} \text{IDF}(q) \cdot \frac{f(q, D) \cdot (k_1 + 1)}{f(q, D) + k_1 \cdot (1 - b + b \cdot \frac{|D|}{\text{avgdl}})}$$
+
+
+
+### Reciprocal Rank Fusion (RRF) Formula
+
+The RRF score for a document $d$ is calculated by summing the reciprocal of its rank in each individual retrieval system:
+
+$$RRFscore(d \in D) = \sum_{r \in R} \frac{1}{k + r(d)}$$
+
+#### Variables:
+* **$R$**: The set of rankers (e.g., [BM25, Vector Search]).
+* **$r(d)$**: The rank of document $d$ in ranker $r$ (e.g., 1 for the top result, 2 for the second).
+* **$k$**: A constant (smoothing parameter), typically set to **60**. It prevents documents ranked very highly by one system from completely overpowering the others.
+
+It's good for merging algorithms with different scoring systems since it only cares about rank
+
+### Cross-Encoding
+Cross-Encoders process the query and document simultaneously as a single input pair. This allows the model to perform "full self-attention,"

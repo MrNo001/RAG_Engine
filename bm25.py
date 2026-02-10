@@ -28,10 +28,11 @@ class BM25:
     b: float = 0.75
     epsilon: float = 0.25
 
-    def __init__(self, k1 = 1.5, b = 0.75, epsilon = 0.25) -> None:
+    def __init__(self, passages:list[Passage], k1 = 1.5, b = 0.75, epsilon = 0.25,) -> None:
         self.k1 = k1
         self.b = b
         self.epsilon = epsilon
+        self.passages = passages
         
 
     def calc_idf(self, nd):
@@ -51,8 +52,8 @@ class BM25:
             self.idf[word] = eps
         return;
 
-    def build_index(self,passages: list[Passage]) -> BM25:
-        corpus_tokens = [tokenize(p.text) for p in passages] #List of list of strings
+    def build_index(self,passages_text: list[str]) -> BM25:
+        corpus_tokens = [tokenize(p.text) for p in passages_text] #List of list of strings
         doc_len_sum = 0
 
         for document in corpus_tokens:
